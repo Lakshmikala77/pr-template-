@@ -59,6 +59,18 @@ jobs:
           echo "PROD_IMAGE_EU=$PROD_IMAGE_EU" >> $GITHUB_ENV
           echo "PROD_IMAGE_US=$PROD_IMAGE_US" >> $GITHUB_ENV
 
+      - name: Debug Parsed Variables
+        run: |
+          echo "Debug: Loaded environment variables"
+          echo "DEV_SELECTED=$DEV_SELECTED"
+          echo "STAGING_SELECTED=$STAGING_SELECTED"
+          echo "PREPROD_SELECTED=$PREPROD_SELECTED"
+          echo "PROD_SELECTED=$PROD_SELECTED"
+          echo "DEV_IMAGE_AP=$DEV_IMAGE_AP"
+          echo "STAGING_IMAGE_AP=$STAGING_IMAGE_AP"
+          echo "PREPROD_IMAGE_AP=$PREPROD_IMAGE_AP"
+          echo "PROD_IMAGE_AP=$PROD_IMAGE_AP"
+
       - name: Display Selected Environments
         run: |
           echo "Selected environments: "
