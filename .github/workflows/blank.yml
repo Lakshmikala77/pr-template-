@@ -1,8 +1,11 @@
-name: Environment Deployment
+name: Deployment Pipeline
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    types:
+      - opened
+      - edited
+      - reopened
 
 jobs:
   deploy:
@@ -29,55 +32,45 @@ jobs:
           echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
           echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
 
-          echo "Selected environments:"
-          echo "Dev: $DEV_SELECTED"
-          echo "Staging: $STAGING_SELECTED"
-          echo "Preprod: $PREPROD_SELECTED"
-          echo "Prod: $PROD_SELECTED"
-
-          # Extract image tags only for the selected environment
-          if [[ "$DEV_SELECTED" == "Y" ]]; then
+          # Extract image tags
+          if [[ "$DEV_SELECTED" == "Y" || "$STAGING_SELECTED" == "Y" ]]; then
             AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1)
             EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1)
             US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1)
-          elif [[ "$STAGING_SELECTED" == "Y" ]]; then
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1)
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1)
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1)
-          elif [[ "$PREPROD_SELECTED" == "Y" ]]; then
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1)
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1)
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1)
-          elif [[ "$PROD_SELECTED" == "Y" ]]; then
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1)
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1)
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1)
+          elif [[ "$PREPROD_SELECTED" == "Y" || "$PROD_SELECTED" == "Y" ]]; then
+            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1 || echo "")
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1 || echo "")
+            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1 || echo "")
           fi
 
           echo "AP_IMAGE=$AP_IMAGE" >> $GITHUB_ENV
           echo "EU_IMAGE=$EU_IMAGE" >> $GITHUB_ENV
           echo "US_IMAGE=$US_IMAGE" >> $GITHUB_ENV
 
-      - name: Validate Selection
-        run: |
-          echo "Validating environment selection..."
+          echo "Selected Regions:"
+          echo "AP_IMAGE=$AP_IMAGE"
+          echo "EU_IMAGE=$EU_IMAGE"
+          echo "US_IMAGE=$US_IMAGE"
 
-          SELECTED_COUNT=$(( $(echo "$DEV_SELECTED $STAGING_SELECTED $PREPROD_SELECTED $PROD_SELECTED" | grep -o 'Y' | wc -l) ))
-          if [[ $SELECTED_COUNT -ne 1 ]]; then
-            echo "Error: Exactly one environment must be selected. Exiting."
-            exit 1
+      - name: Deploy to Selected Environment
+        if: env.DEV_SELECTED == 'Y' || env.STAGING_SELECTED == 'Y' || env.PREPROD_SELECTED == 'Y' || env.PROD_SELECTED == 'Y'
+        run: |
+          if [[ "$DEV_SELECTED" == "Y" ]]; then
+            echo "Deploying to Dev Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
+          elif [[ "$STAGING_SELECTED" == "Y" ]]; then
+            echo "Deploying to Staging Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
+          elif [[ "$PREPROD_SELECTED" == "Y" ]]; then
+            if [[ -n "$AP_IMAGE" || -n "$EU_IMAGE" || -n "$US_IMAGE" ]]; then
+              echo "Deploying to Preprod Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
+            else
+              echo "Error: No region selected for Preprod."
+              exit 1
+            fi
+          elif [[ "$PROD_SELECTED" == "Y" ]]; then
+            if [[ -n "$AP_IMAGE" || -n "$EU_IMAGE" || -n "$US_IMAGE" ]]; then
+              echo "Deploying to Prod Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
+            else
+              echo "Error: No region selected for Prod."
+              exit 1
+            fi
           fi
-
-      - name: Debug Extracted Images
-        run: |
-          echo "Selected Environment: $(if [[ $DEV_SELECTED == Y ]]; then echo Dev; elif [[ $STAGING_SELECTED == Y ]]; then echo Staging; elif [[ $PREPROD_SELECTED == Y ]]; then echo Preprod; else echo Prod; fi)"
-          echo "AP Image: $AP_IMAGE"
-          echo "EU Image: $EU_IMAGE"
-          echo "US Image: $US_IMAGE"
-
-      - name: Deploy
-        run: |
-          echo "Deploying to the selected environments..."
-          echo "AP Region Image: $AP_IMAGE"
-          echo "EU Region Image: $EU_IMAGE"
-          echo "US Region Image: $US_IMAGE"
