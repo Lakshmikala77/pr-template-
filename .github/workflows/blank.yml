@@ -70,7 +70,7 @@ jobs:
             if [[ -n "$AP_IMAGE" || -n "$EU_IMAGE" || -n "$US_IMAGE" ]]; then
               echo "Deploying to Prod Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
             else
-              echo "Error: No region selected for Prod."
+              echo "Error: No region selected for Produ."
               exit 1
             fi
           fi
