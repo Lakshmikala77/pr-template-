@@ -1,0 +1,46 @@
+name: Deploy to Dev
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Extract Pull Request Body
+        id: extract
+        run: |
+          PR_BODY=$(jq -r '.pull_request.body' < $GITHUB_EVENT_PATH)
+          echo "Pull Request Body: $PR_BODY"
+
+          # Extract image tags for Dev environment
+          AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)')
+          EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)')
+          US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)')
+
+          echo "AP_IMAGE=$AP_IMAGE" >> $GITHUB_ENV
+          echo "EU_IMAGE=$EU_IMAGE" >> $GITHUB_ENV
+          echo "US_IMAGE=$US_IMAGE" >> $GITHUB_ENV
+
+          echo "Extracted AP Image: $AP_IMAGE"
+          echo "Extracted EU Image: $EU_IMAGE"
+          echo "Extracted US Image: $US_IMAGE"
+
+      - name: Debug Output
+        run: |
+          echo "AP Image: $AP_IMAGE"
+          echo "EU Image: $EU_IMAGE"
+          echo "US Image: $US_IMAGE"
+
+      - name: Deployment Step
+        run: |
+          echo "Deploying to Dev environment..."
+          echo "Using images:"
+          echo "- AP Region: $AP_IMAGE"
+          echo "- EU Region: $EU_IMAGE"
+          echo "- US Region: $US_IMAGE"
