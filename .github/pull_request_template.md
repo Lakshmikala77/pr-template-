@@ -1,21 +1,22 @@
 # Pull Request Template
 
 ## Environment Selection
-- Dev: `Y`
-- Staging: `N`
+- Dev: `N`
+- Staging: `Y`
 - Preprod: `N`
 - Prod: `N`
 
+## Regions and Image Tags
+
 ### Dev Environment
-- **AP Region:** `tag-ap-dev`
-- **EU Region:** `tag-eu-dev`
-- **US Region:** `tag-us-dev`
-
-
-### Staging Environment
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
+
+### Staging Environment
+- **AP Region:** `stag-ap-image`
+- **EU Region:** `stag-eu-image`
+- **US Region:** `stag-us-image`
 
 ### Preprod Environment
 - **AP Region:** 
@@ -26,6 +27,3 @@
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
-
-
-
