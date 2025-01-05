@@ -18,13 +18,13 @@ jobs:
           PR_BODY=$(jq -r '.pull_request.body' < "$GITHUB_EVENT_PATH")
           echo "PR_BODY=$PR_BODY"
 
-          # Parse selected environments
+          # Get selected environments
           DEV_SELECTED=$(echo "$PR_BODY" | sed -n '/- Dev:/s/.*`\([^`]*\)`.*/\1/p' | tr -d '[:space:]')
           STAGING_SELECTED=$(echo "$PR_BODY" | sed -n '/- Staging:/s/.*`\([^`]*\)`.*/\1/p' | tr -d '[:space:]')
           PREPROD_SELECTED=$(echo "$PR_BODY" | sed -n '/- Preprod:/s/.*`\([^`]*\)`.*/\1/p' | tr -d '[:space:]')
           PROD_SELECTED=$(echo "$PR_BODY" | sed -n '/- Prod:/s/.*`\([^`]*\)`.*/\1/p' | tr -d '[:space:]')
 
-          # Parse image tags for each environment
+          # Get image tags for each environment
           DEV_IMAGE_AP=$(echo "$PR_BODY" | sed -n '/Dev Environment/,/Staging Environment/{/AP Region:/s/.*`\([^`]*\)`.*/\1/p}')
           DEV_IMAGE_EU=$(echo "$PR_BODY" | sed -n '/Dev Environment/,/Staging Environment/{/EU Region:/s/.*`\([^`]*\)`.*/\1/p}')
           DEV_IMAGE_US=$(echo "$PR_BODY" | sed -n '/Dev Environment/,/Staging Environment/{/US Region:/s/.*`\([^`]*\)`.*/\1/p}')
@@ -41,7 +41,7 @@ jobs:
           PROD_IMAGE_EU=$(echo "$PR_BODY" | sed -n '/Prod Environment/,/Selected Regions/{/EU Region:/s/.*`\([^`]*\)`.*/\1/p}')
           PROD_IMAGE_US=$(echo "$PR_BODY" | sed -n '/Prod Environment/,/Selected Regions/{/US Region:/s/.*`\([^`]*\)`.*/\1/p}')
 
-          # Export parsed variables
+          # Export the variables
           echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
           echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
           echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
