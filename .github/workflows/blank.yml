@@ -168,7 +168,7 @@ jobs:
       - name: Deploy to Selected Environment
         if: env.SELECTED_ENV
         run: |
-          echo "Deploying to $SELECTED_ENV Environment with regions:"
+          echo "Deploying to $SELECTED_ENV Environment with regionss:"
           [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
           [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
           [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
