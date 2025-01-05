@@ -77,7 +77,7 @@ jobs:
 
       - name: Deploy
         run: |
-          echo "Deploying to the selected environment..."
+          echo "Deploying to the selected environments..."
           echo "AP Region Image: $AP_IMAGE"
           echo "EU Region Image: $EU_IMAGE"
           echo "US Region Image: $US_IMAGE"
