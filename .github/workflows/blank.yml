@@ -214,7 +214,7 @@ jobs:
 
           if [ "$STAGING_SELECTED" == "Y" ]; then
             if [ -z "$STAGING_IMAGE_AP" ] || [ -z "$STAGING_IMAGE_EU" ] || [ -z "$STAGING_IMAGE_US" ]; then
-              echo "Error: Missing image tag values for Staging Environments."
+              echo "Error: Missing image tag values for Staging Environmensts."
               exit 1
             fi
             echo "Staging: AP=$STAGING_IMAGE_AP, EU=$STAGING_IMAGE_EU, US=$STAGING_IMAGE_US"
