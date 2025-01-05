@@ -1,28 +1,28 @@
 # Pull Request Template
 
 ## Select Environment
-- Dev: `Y/N`
-- Staging: `Y/N`
-- Preprod: `Y/N`
-- Prod: `Y/N`
+- Dev: `N`
+- Staging: `N`
+- Preprod: `N`
+- Prod: `N`
 
 ## Image Tags for Selected Environment
 ### Dev Environment (Multi-Region)
-- **AP Region:** `image-tag-dev-ap`
-- **EU Region:** `image-tag-dev-eu`
-- **US Region:** `image-tag-dev-us`
+- **AP Region:** 
+- **EU Region:** 
+- **US Region:** 
 
 ### Staging Environment (Multi-Region)
-- **AP Region:** `image-tag-staging-ap`
-- **EU Region:** `image-tag-staging-eu`
-- **US Region:** `image-tag-staging-us`
+- **AP Region:** 
+- **EU Region:** 
+- **US Region:** 
 
 ### Preprod Environment (Multi-Region or Single-Region)
-- **AP Region:** `image-tag-preprod-ap`
-- **EU Region:** `image-tag-preprod-eu`
-- **US Region:** `image-tag-preprod-us`
+- **AP Region:** 
+- **EU Region:** 
+- **US Region:** 
 
 ### Prod Environment (Multi-Region or Single-Region)
-- **AP Region:** `image-tag-prod-ap`
-- **EU Region:** `image-tag-prod-eu`
-- **US Region:** `image-tag-prod-us`
+- **AP Region:** 
+- **EU Region:** 
+- **US Region:** 
