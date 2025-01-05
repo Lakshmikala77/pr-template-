@@ -32,45 +32,77 @@ jobs:
           echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
           echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
 
-          # Extract image tags
-          if [[ "$DEV_SELECTED" == "Y" || "$STAGING_SELECTED" == "Y" ]]; then
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1)
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1)
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1)
-          elif [[ "$PREPROD_SELECTED" == "Y" || "$PROD_SELECTED" == "Y" ]]; then
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1 || echo "")
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1 || echo "")
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1 || echo "")
+          # Initialize image variables
+          AP_IMAGE=""
+          EU_IMAGE=""
+          US_IMAGE=""
+
+          # Extract image tags for the selected environment only
+          if [[ "$DEV_SELECTED" == "Y" ]]; then
+            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Dev Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Dev Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Dev Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+          elif [[ "$STAGING_SELECTED" == "Y" ]]; then
+            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Staging Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Staging Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Staging Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+          elif [[ "$PREPROD_SELECTED" == "Y" ]]; then
+            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+
+            # Validate Preprod: Allow only one region or all three
+            REGION_COUNT=0
+            [[ -n "$AP_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
+            [[ -n "$EU_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
+            [[ -n "$US_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
+
+            if [[ $REGION_COUNT -ne 1 && $REGION_COUNT -ne 3 ]]; then
+              echo "Error: For Preprod, you must specify either one region or all three regions. Provided: $REGION_COUNT region(s)."
+              exit 1
+            fi
+          elif [[ "$PROD_SELECTED" == "Y" ]]; then
+            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Prod Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Prod Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Prod Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+
+            # Validate Prod: Allow only one region or all three
+            REGION_COUNT=0
+            [[ -n "$AP_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
+            [[ -n "$EU_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
+            [[ -n "$US_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
+
+            if [[ $REGION_COUNT -ne 1 && $REGION_COUNT -ne 3 ]]; then
+              echo "Error: For Prod, you must specify either one region or all three regions. Provided: $REGION_COUNT region(s)."
+              exit 1
+            fi
           fi
 
           echo "AP_IMAGE=$AP_IMAGE" >> $GITHUB_ENV
           echo "EU_IMAGE=$EU_IMAGE" >> $GITHUB_ENV
           echo "US_IMAGE=$US_IMAGE" >> $GITHUB_ENV
 
-          echo "Selected Regions:"
-          echo "AP_IMAGE=$AP_IMAGE"
-          echo "EU_IMAGE=$EU_IMAGE"
-          echo "US_IMAGE=$US_IMAGE"
-
       - name: Deploy to Selected Environment
         if: env.DEV_SELECTED == 'Y' || env.STAGING_SELECTED == 'Y' || env.PREPROD_SELECTED == 'Y' || env.PROD_SELECTED == 'Y'
         run: |
           if [[ "$DEV_SELECTED" == "Y" ]]; then
-            echo "Deploying to Dev Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
+            echo "Deploying to Dev Environment with regions:"
+            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
+            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
+            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
           elif [[ "$STAGING_SELECTED" == "Y" ]]; then
-            echo "Deploying to Staging Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
+            echo "Deploying to Staging Environment with regions:"
+            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
+            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
+            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
           elif [[ "$PREPROD_SELECTED" == "Y" ]]; then
-            if [[ -n "$AP_IMAGE" || -n "$EU_IMAGE" || -n "$US_IMAGE" ]]; then
-              echo "Deploying to Preprod Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
-            else
-              echo "Error: No region selected for Preprod."
-              exit 1
-            fi
+            echo "Deploying to Preprod Environment with regions:"
+            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
+            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
+            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
           elif [[ "$PROD_SELECTED" == "Y" ]]; then
-            if [[ -n "$AP_IMAGE" || -n "$EU_IMAGE" || -n "$US_IMAGE" ]]; then
-              echo "Deploying to Prod Environment with regions: AP=$AP_IMAGE, EU=$EU_IMAGE, US=$US_IMAGE"
-            else
-              echo "Error: No region selected for Prod."
-              exit 1
-            fi
+            echo "Deploying to Prod Environment with regions:"
+            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
+            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
+            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
           fi
