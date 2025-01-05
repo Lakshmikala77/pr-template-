@@ -149,21 +149,64 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Parse and Validate PR Body
-        id: parse_and_validate
+        id: parse_pr
         run: |
           # Extract the pull request body
           PR_BODY=$(jq -r '.pull_request.body' < "$GITHUB_EVENT_PATH")
           echo "PR_BODY=$PR_BODY"
 
-          # Define environments
-          ENVIRONMENTS=("dev" "staging" "staging_production" "preprod" "production")
-          MISSING_VALUES=false
-
           # Initialize selected environment variables
-          for ENV in "${ENVIRONMENTS[@]}"; do
-            SELECTED=$(echo "$PR_BODY" | grep -i "- $ENV:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
-            export ${ENV^^}_SELECTED="$SELECTED"
-            
-            if [ "$SELECTED" == "Y" ]; then
-              AP_TAG=$( echo "$PR_BODY" | awk -F'Y'| awk "END {print upper}" )
-               
+          DEV_SELECTED=$(echo "$PR_BODY" | grep -i "- Dev:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          STAGING_SELECTED=$(echo "$PR_BODY" | grep -i "- Staging:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          PREPROD_SELECTED=$(echo "$PR_BODY" | grep -i "- Preprod:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          PROD_SELECTED=$(echo "$PR_BODY" | grep -i "- Prod:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+
+          echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
+          echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
+          echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
+          echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
+
+          # Extract image tags for each region
+          DEV_IMAGE_AP=$(echo "$PR_BODY" | grep -A 3 "Dev Environment" | grep "AP Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          DEV_IMAGE_EU=$(echo "$PR_BODY" | grep -A 3 "Dev Environment" | grep "EU Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          DEV_IMAGE_US=$(echo "$PR_BODY" | grep -A 3 "Dev Environment" | grep "US Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+
+          STAGING_IMAGE_AP=$(echo "$PR_BODY" | grep -A 3 "Staging Environment" | grep "AP Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          STAGING_IMAGE_EU=$(echo "$PR_BODY" | grep -A 3 "Staging Environment" | grep "EU Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          STAGING_IMAGE_US=$(echo "$PR_BODY" | grep -A 3 "Staging Environment" | grep "US Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+
+          # Export image tags to the environment
+          echo "DEV_IMAGE_AP=$DEV_IMAGE_AP" >> $GITHUB_ENV
+          echo "DEV_IMAGE_EU=$DEV_IMAGE_EU" >> $GITHUB_ENV
+          echo "DEV_IMAGE_US=$DEV_IMAGE_US" >> $GITHUB_ENV
+          echo "STAGING_IMAGE_AP=$STAGING_IMAGE_AP" >> $GITHUB_ENV
+          echo "STAGING_IMAGE_EU=$STAGING_IMAGE_EU" >> $GITHUB_ENV
+          echo "STAGING_IMAGE_US=$STAGING_IMAGE_US" >> $GITHUB_ENV
+
+      - name: Validate and Display Selected Environments
+        run: |
+          echo "Selected Environments:"
+
+          if [ "$DEV_SELECTED" == "Y" ]; then
+            if [ -z "$DEV_IMAGE_AP" ] || [ -z "$DEV_IMAGE_EU" ] || [ -z "$DEV_IMAGE_US" ]; then
+              echo "Error: Missing image tag values for Dev Environment."
+              exit 1
+            fi
+            echo "Dev: AP=$DEV_IMAGE_AP, EU=$DEV_IMAGE_EU, US=$DEV_IMAGE_US"
+          fi
+
+          if [ "$STAGING_SELECTED" == "Y" ]; then
+            if [ -z "$STAGING_IMAGE_AP" ] || [ -z "$STAGING_IMAGE_EU" ] || [ -z "$STAGING_IMAGE_US" ]; then
+              echo "Error: Missing image tag values for Staging Environment."
+              exit 1
+            fi
+            echo "Staging: AP=$STAGING_IMAGE_AP, EU=$STAGING_IMAGE_EU, US=$STAGING_IMAGE_US"
+          fi
+
+          if [ "$PREPROD_SELECTED" == "Y" ]; then
+            echo "Preprod is selected but not implemented in this step."
+          fi
+
+          if [ "$PROD_SELECTED" == "Y" ]; then
+            echo "Production is selected but not implemented in this step."
+          fi
