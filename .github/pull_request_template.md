@@ -7,22 +7,22 @@
 - Prod: `N`
 
 ## Image Tags for Selected Environment
-### Dev Environment (Multi-Region)
+### Dev Environment 
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
 
-### Staging Environment (Multi-Region)
+### Staging Environment 
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
 
-### Preprod Environment (Multi-Region or Single-Region)
+### Preprod Environment 
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
 
-### Prod Environment (Multi-Regions or Single-Region)
+### Prod Environment 
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
