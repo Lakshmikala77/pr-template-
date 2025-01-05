@@ -4,88 +4,77 @@ on:
   pull_request:
     types:
       - opened
-      - edited
+      - synchronize
       - reopened
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Extract Pull Request Body
-        id: extract
+      - name: Extract PR body and determine selected environment
+        id: pr
         run: |
           PR_BODY=$(jq -r '.pull_request.body' < $GITHUB_EVENT_PATH)
-          echo "Pull Request Body: $PR_BODY"
-
-          # Extract environment selections (Dev, Staging, Preprod, Prod)
-          DEV_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Dev: `)Y(?=`)' || echo "N")
-          STAGING_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Staging: `)Y(?=`)' || echo "N")
-          PREPROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Preprod: `)Y(?=`)' || echo "N")
-          PROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Prod: `)Y(?=`)' || echo "N")
-
-          # Debugging: Show the environment selections
-          echo "DEV_SELECTED: $DEV_SELECTED"
-          echo "STAGING_SELECTED: $STAGING_SELECTED"
-          echo "PREPROD_SELECTED: $PREPROD_SELECTED"
-          echo "PROD_SELECTED: $PROD_SELECTED"
-
-          # Extract image tags based on environment selection
-          if [[ "$DEV_SELECTED" == "Y" ]]; then
-            SELECTED_ENV="Dev"
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Dev Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Dev Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Dev Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-          elif [[ "$STAGING_SELECTED" == "Y" ]]; then
-            SELECTED_ENV="Staging"
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Staging Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Staging Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Staging Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-          elif [[ "$PREPROD_SELECTED" == "Y" ]]; then
-            SELECTED_ENV="Preprod"
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-          elif [[ "$PROD_SELECTED" == "Y" ]]; then
-            SELECTED_ENV="Prod"
-            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Prod Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Prod Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Prod Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-          fi
-
-          # Debugging: Show selected environment and image tags
-          echo "SELECTED_ENV: $SELECTED_ENV"
-          echo "AP_IMAGE: $AP_IMAGE"
-          echo "EU_IMAGE: $EU_IMAGE"
-          echo "US_IMAGE: $US_IMAGE"
-
-          echo "SELECTED_ENV=$SELECTED_ENV" >> $GITHUB_ENV
-          echo "AP_IMAGE=$AP_IMAGE" >> $GITHUB_ENV
-          echo "EU_IMAGE=$EU_IMAGE" >> $GITHUB_ENV
-          echo "US_IMAGE=$US_IMAGE" >> $GITHUB_ENV
-
-      - name: Deploy to Selected Environment
-        if: env.SELECTED_ENV
-        run: |
-          echo "Deploying to $SELECTED_ENV Environment with regions:"
           
-          # Only print the regions for the selected environment
-          if [[ "$SELECTED_ENV" == "Dev" ]]; then
-            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
-            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
-            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
-          elif [[ "$SELECTED_ENV" == "Staging" ]]; then
-            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
-            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
-            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
-          elif [[ "$SELECTED_ENV" == "Preprod" ]]; then
-            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
-            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
-            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
-          elif [[ "$SELECTED_ENV" == "Prod" ]]; then
-            [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
-            [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
-            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
+          # Set environment selection flags based on user input
+          DEV_SELECTED=$(echo "$PR_BODY" | grep -i 'Dev' | awk -F: '{print $2}' | tr -d '[:space:]')
+          STAGING_SELECTED=$(echo "$PR_BODY" | grep -i 'Staging' | awk -F: '{print $2}' | tr -d '[:space:]')
+          PREPROD_SELECTED=$(echo "$PR_BODY" | grep -i 'Preprod' | awk -F: '{print $2}' | tr -d '[:space:]')
+          PROD_SELECTED=$(echo "$PR_BODY" | grep -i 'Prod' | awk -F: '{print $2}' | tr -d '[:space:]')
+
+          # Set environment values
+          DEV_IMAGE_AP=$(echo "$PR_BODY" | grep -A 1 'Dev Environment' | grep 'AP Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          DEV_IMAGE_EU=$(echo "$PR_BODY" | grep -A 1 'Dev Environment' | grep 'EU Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          DEV_IMAGE_US=$(echo "$PR_BODY" | grep -A 1 'Dev Environment' | grep 'US Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+
+          STAGING_IMAGE_AP=$(echo "$PR_BODY" | grep -A 1 'Staging Environment' | grep 'AP Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          STAGING_IMAGE_EU=$(echo "$PR_BODY" | grep -A 1 'Staging Environment' | grep 'EU Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          STAGING_IMAGE_US=$(echo "$PR_BODY" | grep -A 1 'Staging Environment' | grep 'US Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+
+          PREPROD_IMAGE_AP=$(echo "$PR_BODY" | grep -A 1 'Preprod Environment' | grep 'AP Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          PREPROD_IMAGE_EU=$(echo "$PR_BODY" | grep -A 1 'Preprod Environment' | grep 'EU Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          PREPROD_IMAGE_US=$(echo "$PR_BODY" | grep -A 1 'Preprod Environment' | grep 'US Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+
+          PROD_IMAGE_AP=$(echo "$PR_BODY" | grep -A 1 'Prod Environment' | grep 'AP Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          PROD_IMAGE_EU=$(echo "$PR_BODY" | grep -A 1 'Prod Environment' | grep 'EU Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+          PROD_IMAGE_US=$(echo "$PR_BODY" | grep -A 1 'Prod Environment' | grep 'US Region' | awk -F: '{print $2}' | tr -d '[:space:]')
+
+          echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
+          echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
+          echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
+          echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
+
+          echo "DEV_IMAGE_AP=$DEV_IMAGE_AP" >> $GITHUB_ENV
+          echo "DEV_IMAGE_EU=$DEV_IMAGE_EU" >> $GITHUB_ENV
+          echo "DEV_IMAGE_US=$DEV_IMAGE_US" >> $GITHUB_ENV
+
+          echo "STAGING_IMAGE_AP=$STAGING_IMAGE_AP" >> $GITHUB_ENV
+          echo "STAGING_IMAGE_EU=$STAGING_IMAGE_EU" >> $GITHUB_ENV
+          echo "STAGING_IMAGE_US=$STAGING_IMAGE_US" >> $GITHUB_ENV
+
+          echo "PREPROD_IMAGE_AP=$PREPROD_IMAGE_AP" >> $GITHUB_ENV
+          echo "PREPROD_IMAGE_EU=$PREPROD_IMAGE_EU" >> $GITHUB_ENV
+          echo "PREPROD_IMAGE_US=$PREPROD_IMAGE_US" >> $GITHUB_ENV
+
+          echo "PROD_IMAGE_AP=$PROD_IMAGE_AP" >> $GITHUB_ENV
+          echo "PROD_IMAGE_EU=$PROD_IMAGE_EU" >> $GITHUB_ENV
+          echo "PROD_IMAGE_US=$PROD_IMAGE_US" >> $GITHUB_ENV
+
+      - name: Print selected environment values
+        run: |
+          echo "Selected environments: "
+          if [ "$DEV_SELECTED" == "Y" ]; then
+            echo "Dev: AP=$DEV_IMAGE_AP, EU=$DEV_IMAGE_EU, US=$DEV_IMAGE_US"
+          fi
+          if [ "$STAGING_SELECTED" == "Y" ]; then
+            echo "Staging: AP=$STAGING_IMAGE_AP, EU=$STAGING_IMAGE_EU, US=$STAGING_IMAGE_US"
+          fi
+          if [ "$PREPROD_SELECTED" == "Y" ]; then
+            echo "Preprod: AP=$PREPROD_IMAGE_AP, EU=$PREPROD_IMAGE_EU, US=$PREPROD_IMAGE_US"
+          fi
+          if [ "$PROD_SELECTED" == "Y" ]; then
+            echo "Prod: AP=$PROD_IMAGE_AP, EU=$PROD_IMAGE_EU, US=$PROD_IMAGE_US"
+          fi
