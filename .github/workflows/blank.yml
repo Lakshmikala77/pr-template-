@@ -49,7 +49,7 @@ jobs:
         echo "DEV_SELECTED=$DEV_SELECTED"
         echo "STAGING_SELECTED=$STAGING_SELECTED"
         echo "PREPROD_SELECTED=$PREPROD_SELECTED"
-        echo "PROD_SELECTED=$PROD_SELECTED"
+        echo "PROD_SELECTED=$PROD_SELECcTED"
 
         if [ "$DEV_SELECTED" == "Y" ]; then
           echo "Dev: AP=$DEV_IMAGE_AP, EU=$DEV_IMAGE_EU, US=$DEV_IMAGE_US"
