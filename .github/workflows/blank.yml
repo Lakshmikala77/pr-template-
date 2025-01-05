@@ -1,4 +1,4 @@
-name: Deploy to Dev
+name: Environment Deployment
 
 on:
   pull_request:
@@ -18,29 +18,59 @@ jobs:
           PR_BODY=$(jq -r '.pull_request.body' < $GITHUB_EVENT_PATH)
           echo "Pull Request Body: $PR_BODY"
 
-          # Extract image tags for Dev environment
-          AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)')
-          EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)')
-          US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)')
+          # Extract environment selection
+          DEV_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Dev: `)Y(?=`)' || echo "N")
+          STAGING_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Staging: `)Y(?=`)' || echo "N")
+          PREPROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Preprod: `)Y(?=`)' || echo "N")
+          PROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Prod: `)Y(?=`)' || echo "N")
+
+          echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
+          echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
+          echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
+          echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
+
+          echo "Selected environments:"
+          echo "Dev: $DEV_SELECTED"
+          echo "Staging: $STAGING_SELECTED"
+          echo "Preprod: $PREPROD_SELECTED"
+          echo "Prod: $PROD_SELECTED"
+
+          # Extract image tags only for Dev (if selected)
+          if [[ "$DEV_SELECTED" == "Y" ]]; then
+            AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*AP Region:\*\* `).*?(?=`)' | head -1)
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*EU Region:\*\* `).*?(?=`)' | head -1)
+            US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=- \*\*US Region:\*\* `).*?(?=`)' | head -1)
+          fi
 
           echo "AP_IMAGE=$AP_IMAGE" >> $GITHUB_ENV
           echo "EU_IMAGE=$EU_IMAGE" >> $GITHUB_ENV
           echo "US_IMAGE=$US_IMAGE" >> $GITHUB_ENV
 
-          echo "Extracted AP Image: $AP_IMAGE"
-          echo "Extracted EU Image: $EU_IMAGE"
-          echo "Extracted US Image: $US_IMAGE"
+      - name: Validate Selection
+        run: |
+          echo "Validating environment selection..."
 
-      - name: Debug Output
+          if [[ "$DEV_SELECTED" == "Y" && ( "$STAGING_SELECTED" == "Y" || "$PREPROD_SELECTED" == "Y" || "$PROD_SELECTED" == "Y" ) ]]; then
+            echo "Error: Multiple environments cannot be selected for deployment. Exiting."
+            exit 1
+          fi
+
+          if [[ "$DEV_SELECTED" != "Y" ]]; then
+            echo "Skipping deployment as Dev is not selected."
+            exit 0
+          fi
+
+      - name: Debug Extracted Images
+        if: env.DEV_SELECTED == 'Y'
         run: |
           echo "AP Image: $AP_IMAGE"
           echo "EU Image: $EU_IMAGE"
           echo "US Image: $US_IMAGE"
 
-      - name: Deployment Step
+      - name: Deploy to Dev
+        if: env.DEV_SELECTED == 'Y'
         run: |
-          echo "Deploying to Dev environment..."
-          echo "Using images:"
+          echo "Deploying to Dev environment with the following images:"
           echo "- AP Region: $AP_IMAGE"
           echo "- EU Region: $EU_IMAGE"
           echo "- US Region: $US_IMAGE"
