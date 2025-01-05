@@ -186,7 +186,7 @@ jobs:
           echo "STAGING_IMAGE_EU=$STAGING_IMAGE_EU" >> $GITHUB_ENV
           echo "STAGING_IMAGE_US=$STAGING_IMAGE_US" >> $GITHUB_ENV
 
-      - name: Validate and Display Selected Environments
+      - name: Validate and Display Selected Environmentss
         run: |
           echo "Selected Environments:"
 
