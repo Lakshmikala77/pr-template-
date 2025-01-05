@@ -22,7 +22,7 @@
 - **EU Region:** 
 - **US Region:** 
 
-### Prod Environment (Multi-Region or Single-Region)
+### Prod Environment (Multi-Regions or Single-Region)
 - **AP Region:** 
 - **EU Region:** 
 - **US Region:** 
