@@ -20,17 +20,26 @@ jobs:
         run: |
           PR_BODY=$(jq -r '.pull_request.body' < $GITHUB_EVENT_PATH)
           echo "Pull Request Body: $PR_BODY"
+          
+          # Debugging: Show the entire PR body to ensure it's being parsed
+          echo "PR_BODY: $PR_BODY"
 
           # Extract environment selection
           DEV_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Dev: `)Y(?=`)' || echo "N")
           STAGING_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Staging: `)Y(?=`)' || echo "N")
           PREPROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Preprod: `)Y(?=`)' || echo "N")
           PROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Prod: `)Y(?=`)' || echo "N")
-
+          
           echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
           echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
           echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
           echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
+
+          # Debugging: Show environment selections
+          echo "DEV_SELECTED: $DEV_SELECTED"
+          echo "STAGING_SELECTED: $STAGING_SELECTED"
+          echo "PREPROD_SELECTED: $PREPROD_SELECTED"
+          echo "PROD_SELECTED: $PROD_SELECTED"
 
           # Extract image tags based on environment selection
           if [[ "$DEV_SELECTED" == "Y" ]]; then
@@ -81,5 +90,4 @@ jobs:
           elif [[ "$SELECTED_ENV" == "Prod" ]]; then
             [[ -n "$AP_IMAGE" ]] && echo "AP=$AP_IMAGE"
             [[ -n "$EU_IMAGE" ]] && echo "EU=$EU_IMAGE"
-            [[ -n "$US_IMAGE" ]] && echo "US=$US_IMAGE"
-          fi
+            [[ -n "$US_I
