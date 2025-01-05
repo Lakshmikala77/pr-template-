@@ -178,6 +178,14 @@ jobs:
           STAGING_IMAGE_EU=$(echo "$PR_BODY" | grep -A 3 "Staging Environment" | grep "EU Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
           STAGING_IMAGE_US=$(echo "$PR_BODY" | grep -A 3 "Staging Environment" | grep "US Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
 
+          PREPROD_IMAGE_AP=$(echo "$PR_BODY" | grep -A 3 "Preprod Environment" | grep "AP Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          PREPROD_IMAGE_EU=$(echo "$PR_BODY" | grep -A 3 "Preprod Environment" | grep "EU Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          PREPROD_IMAGE_US=$(echo "$PR_BODY" | grep -A 3 "Preprod Environment" | grep "US Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+
+          PROD_IMAGE_AP=$(echo "$PR_BODY" | grep -A 3 "Prod Environment" | grep "AP Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          PROD_IMAGE_EU=$(echo "$PR_BODY" | grep -A 3 "Prod Environment" | grep "EU Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          PROD_IMAGE_US=$(echo "$PR_BODY" | grep -A 3 "Prod Environment" | grep "US Region:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+
           # Export image tags to the environment
           echo "DEV_IMAGE_AP=$DEV_IMAGE_AP" >> $GITHUB_ENV
           echo "DEV_IMAGE_EU=$DEV_IMAGE_EU" >> $GITHUB_ENV
@@ -185,8 +193,14 @@ jobs:
           echo "STAGING_IMAGE_AP=$STAGING_IMAGE_AP" >> $GITHUB_ENV
           echo "STAGING_IMAGE_EU=$STAGING_IMAGE_EU" >> $GITHUB_ENV
           echo "STAGING_IMAGE_US=$STAGING_IMAGE_US" >> $GITHUB_ENV
+          echo "PREPROD_IMAGE_AP=$PREPROD_IMAGE_AP" >> $GITHUB_ENV
+          echo "PREPROD_IMAGE_EU=$PREPROD_IMAGE_EU" >> $GITHUB_ENV
+          echo "PREPROD_IMAGE_US=$PREPROD_IMAGE_US" >> $GITHUB_ENV
+          echo "PROD_IMAGE_AP=$PROD_IMAGE_AP" >> $GITHUB_ENV
+          echo "PROD_IMAGE_EU=$PROD_IMAGE_EU" >> $GITHUB_ENV
+          echo "PROD_IMAGE_US=$PROD_IMAGE_US" >> $GITHUB_ENV
 
-      - name: Validate and Display Selected Environmentss
+      - name: Validate and Display Selected Environments
         run: |
           echo "Selected Environments:"
 
@@ -207,10 +221,17 @@ jobs:
           fi
 
           if [ "$PREPROD_SELECTED" == "Y" ]; then
-            echo "Preprod is selected but not implemented in this step."
+            if [ -z "$PREPROD_IMAGE_AP" ] || [ -z "$PREPROD_IMAGE_EU" ] || [ -z "$PREPROD_IMAGE_US" ]; then
+              echo "Error: Missing image tag values for Preprod Environment."
+              exit 1
+            fi
+            echo "Preprod: AP=$PREPROD_IMAGE_AP, EU=$PREPROD_IMAGE_EU, US=$PREPROD_IMAGE_US"
           fi
 
           if [ "$PROD_SELECTED" == "Y" ]; then
-            echo "Production is selected but not implemented in this step."
+            if [ -z "$PROD_IMAGE_AP" ] || [ -z "$PROD_IMAGE_EU" ] || [ -z "$PROD_IMAGE_US" ]; then
+              echo "Error: Missing image tag values for Prod Environment."
+              exit 1
+            fi
+            echo "Prod: AP=$PROD_IMAGE_AP, EU=$PROD_IMAGE_EU, US=$PROD_IMAGE_US"
           fi
-
