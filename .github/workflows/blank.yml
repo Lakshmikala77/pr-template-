@@ -72,7 +72,10 @@ jobs:
             [[ -n "$EU_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
             [[ -n "$US_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
 
-            if [[ $REGION_COUNT -ne 1 && $REGION_COUNT -ne 3 ]]; then
+            if [[ $REGION_COUNT -eq 0 ]]; then
+              echo "Error: No region specified for $SELECTED_ENV. Provide one or all three regions."
+              exit 1
+            elif [[ $REGION_COUNT -ne 1 && $REGION_COUNT -ne 3 ]]; then
               echo "Error: For $SELECTED_ENV, specify either one region or all three regions. Provided: $REGION_COUNT region(s)."
               exit 1
             fi
