@@ -14,33 +14,35 @@ jobs:
     - name: Extract pull request body
       id: extract-pr-body
       run: |
+        # Read the pull request body
         PR_BODY=$(jq -r '.pull_request.body' < $GITHUB_EVENT_PATH)
         echo "$PR_BODY" > pr_body.txt
+        echo "PR_BODY extracted successfully"
 
-        # Parse selection flags
-        export DEV_SELECTED=$(grep -i "Dev:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export STAGING_SELECTED=$(grep -i "Staging:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export PREPROD_SELECTED=$(grep -i "Preprod:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export PROD_SELECTED=$(grep -i "Prod:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        # Parse environment selections
+        DEV_SELECTED=$(grep -i "Dev:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        STAGING_SELECTED=$(grep -i "Staging:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PREPROD_SELECTED=$(grep -i "Preprod:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PROD_SELECTED=$(grep -i "Prod:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
 
-        # Parse image values
-        export DEV_IMAGE_AP=$(grep -A 3 "Dev Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export DEV_IMAGE_EU=$(grep -A 3 "Dev Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export DEV_IMAGE_US=$(grep -A 3 "Dev Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        # Parse image tags
+        DEV_IMAGE_AP=$(grep -A 3 "Dev Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        DEV_IMAGE_EU=$(grep -A 3 "Dev Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        DEV_IMAGE_US=$(grep -A 3 "Dev Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
 
-        export STAGING_IMAGE_AP=$(grep -A 3 "Staging Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export STAGING_IMAGE_EU=$(grep -A 3 "Staging Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export STAGING_IMAGE_US=$(grep -A 3 "Staging Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        STAGING_IMAGE_AP=$(grep -A 3 "Staging Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        STAGING_IMAGE_EU=$(grep -A 3 "Staging Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        STAGING_IMAGE_US=$(grep -A 3 "Staging Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
 
-        export PREPROD_IMAGE_AP=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export PREPROD_IMAGE_EU=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export PREPROD_IMAGE_US=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PREPROD_IMAGE_AP=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PREPROD_IMAGE_EU=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PREPROD_IMAGE_US=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
 
-        export PROD_IMAGE_AP=$(grep -A 3 "Prod Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export PROD_IMAGE_EU=$(grep -A 3 "Prod Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        export PROD_IMAGE_US=$(grep -A 3 "Prod Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PROD_IMAGE_AP=$(grep -A 3 "Prod Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PROD_IMAGE_EU=$(grep -A 3 "Prod Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        PROD_IMAGE_US=$(grep -A 3 "Prod Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
 
-        # Export variables for the next steps
+        # Export variables for subsequent steps
         echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
         echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
         echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
@@ -62,17 +64,10 @@ jobs:
         echo "PROD_IMAGE_EU=$PROD_IMAGE_EU" >> $GITHUB_ENV
         echo "PROD_IMAGE_US=$PROD_IMAGE_US" >> $GITHUB_ENV
 
-    - name: Debug selected environment values
-      run: |
-        echo "DEV_SELECTED=$DEV_SELECTED"
-        echo "STAGING_SELECTED=$STAGING_SELECTED"
-        echo "PREPROD_SELECTED=$PREPROD_SELECTED"
-        echo "PROD_SELECTED=$PROD_SELECTED"
-
-    - name: Print selected environment values
+    - name: Print selected environments
       run: |
         echo "Selected environments: "
-        
+
         if [ "$DEV_SELECTED" == "Y" ]; then
           echo "Dev: AP=$DEV_IMAGE_AP, EU=$DEV_IMAGE_EU, US=$DEV_IMAGE_US"
         fi
