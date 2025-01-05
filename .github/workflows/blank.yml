@@ -134,6 +134,9 @@
 # #           echo "- AP Region: $AP_IMAGE"
 # #           echo "- EU Region: $EU_IMAGE"
 # #           echo "- US Region: $US_IMAGE"
+
+
+
 name: Environment Deployment
 
 on:
@@ -156,10 +159,10 @@ jobs:
           echo "PR_BODY=$PR_BODY"
 
           # Initialize selected environment variables
-          DEV_SELECTED=$(echo "$PR_BODY" | grep -i "- Dev:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
-          STAGING_SELECTED=$(echo "$PR_BODY" | grep -i "- Staging:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
-          PREPROD_SELECTED=$(echo "$PR_BODY" | grep -i "- Preprod:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
-          PROD_SELECTED=$(echo "$PR_BODY" | grep -i "- Prod:" | awk -F'`' '{print $2}' | tr -d '[:space:]')
+          DEV_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Dev: `)[^`]+')
+          STAGING_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Staging: `)[^`]+')
+          PREPROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Preprod: `)[^`]+')
+          PROD_SELECTED=$(echo "$PR_BODY" | grep -oP '(?<=- Prod: `)[^`]+')
 
           echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
           echo "STAGING_SELECTED=$STAGING_SELECTED" >> $GITHUB_ENV
@@ -210,3 +213,4 @@ jobs:
           if [ "$PROD_SELECTED" == "Y" ]; then
             echo "Production is selected but not implemented in this step."
           fi
+
