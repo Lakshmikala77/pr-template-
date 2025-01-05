@@ -51,7 +51,7 @@ jobs:
           elif [[ "$PREPROD_SELECTED" == "Y" ]]; then
             SELECTED_ENV="Preprod"
             AP_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?AP Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
-            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
+            EU_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?EU Region:\*\* `.*?`' | grep -oP '(?<=`).*?(`)')
             US_IMAGE=$(echo "$PR_BODY" | grep -oP '(?<=Preprod Environment).*?US Region:\*\* `.*?`' | grep -oP '(?<=`).*?(?=`)')
           elif [[ "$PROD_SELECTED" == "Y" ]]; then
             SELECTED_ENV="Prod"
@@ -65,7 +65,7 @@ jobs:
           echo "EU_IMAGE=$EU_IMAGE" >> $GITHUB_ENV
           echo "US_IMAGE=$US_IMAGE" >> $GITHUB_ENV
 
-          # Validate region inputs for Preprod/Prod
+          # Validate region inputs for Preprod/Prod (Only single region or all three)
           if [[ "$SELECTED_ENV" == "Preprod" || "$SELECTED_ENV" == "Prod" ]]; then
             REGION_COUNT=0
             [[ -n "$AP_IMAGE" ]] && REGION_COUNT=$((REGION_COUNT + 1))
