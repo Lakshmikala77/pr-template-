@@ -17,7 +17,10 @@ jobs:
         # Read the pull request body
         PR_BODY=$(jq -r '.pull_request.body' < $GITHUB_EVENT_PATH)
         echo "$PR_BODY" > pr_body.txt
-        echo "PR_BODY extracted successfully"
+
+        # Debug: Display the pull request body
+        echo "Debug: PR Body"
+        cat pr_body.txt
 
         # Parse environment selections
         DEV_SELECTED=$(grep -i "Dev:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
@@ -25,22 +28,12 @@ jobs:
         PREPROD_SELECTED=$(grep -i "Preprod:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
         PROD_SELECTED=$(grep -i "Prod:" pr_body.txt | awk -F '`' '{print $2}' | tr -d '[:space:]')
 
-        # Parse image tags
-        DEV_IMAGE_AP=$(grep -A 3 "Dev Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        DEV_IMAGE_EU=$(grep -A 3 "Dev Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        DEV_IMAGE_US=$(grep -A 3 "Dev Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-
-        STAGING_IMAGE_AP=$(grep -A 3 "Staging Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        STAGING_IMAGE_EU=$(grep -A 3 "Staging Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        STAGING_IMAGE_US=$(grep -A 3 "Staging Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-
-        PREPROD_IMAGE_AP=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        PREPROD_IMAGE_EU=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        PREPROD_IMAGE_US=$(grep -A 3 "Preprod Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-
-        PROD_IMAGE_AP=$(grep -A 3 "Prod Environment" pr_body.txt | grep "AP Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        PROD_IMAGE_EU=$(grep -A 3 "Prod Environment" pr_body.txt | grep "EU Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
-        PROD_IMAGE_US=$(grep -A 3 "Prod Environment" pr_body.txt | grep "US Region:" | awk -F '`' '{print $2}' | tr -d '[:space:]')
+        # Debug: Display parsed values
+        echo "Debug: Parsed Environment Selections"
+        echo "DEV_SELECTED=$DEV_SELECTED"
+        echo "STAGING_SELECTED=$STAGING_SELECTED"
+        echo "PREPROD_SELECTED=$PREPROD_SELECTED"
+        echo "PROD_SELECTED=$PROD_SELECTED"
 
         # Export variables for subsequent steps
         echo "DEV_SELECTED=$DEV_SELECTED" >> $GITHUB_ENV
@@ -48,25 +41,15 @@ jobs:
         echo "PREPROD_SELECTED=$PREPROD_SELECTED" >> $GITHUB_ENV
         echo "PROD_SELECTED=$PROD_SELECTED" >> $GITHUB_ENV
 
-        echo "DEV_IMAGE_AP=$DEV_IMAGE_AP" >> $GITHUB_ENV
-        echo "DEV_IMAGE_EU=$DEV_IMAGE_EU" >> $GITHUB_ENV
-        echo "DEV_IMAGE_US=$DEV_IMAGE_US" >> $GITHUB_ENV
-
-        echo "STAGING_IMAGE_AP=$STAGING_IMAGE_AP" >> $GITHUB_ENV
-        echo "STAGING_IMAGE_EU=$STAGING_IMAGE_EU" >> $GITHUB_ENV
-        echo "STAGING_IMAGE_US=$STAGING_IMAGE_US" >> $GITHUB_ENV
-
-        echo "PREPROD_IMAGE_AP=$PREPROD_IMAGE_AP" >> $GITHUB_ENV
-        echo "PREPROD_IMAGE_EU=$PREPROD_IMAGE_EU" >> $GITHUB_ENV
-        echo "PREPROD_IMAGE_US=$PREPROD_IMAGE_US" >> $GITHUB_ENV
-
-        echo "PROD_IMAGE_AP=$PROD_IMAGE_AP" >> $GITHUB_ENV
-        echo "PROD_IMAGE_EU=$PROD_IMAGE_EU" >> $GITHUB_ENV
-        echo "PROD_IMAGE_US=$PROD_IMAGE_US" >> $GITHUB_ENV
-
     - name: Print selected environments
       run: |
         echo "Selected environments: "
+
+        echo "Debug: Loaded environment variables"
+        echo "DEV_SELECTED=$DEV_SELECTED"
+        echo "STAGING_SELECTED=$STAGING_SELECTED"
+        echo "PREPROD_SELECTED=$PREPROD_SELECTED"
+        echo "PROD_SELECTED=$PROD_SELECTED"
 
         if [ "$DEV_SELECTED" == "Y" ]; then
           echo "Dev: AP=$DEV_IMAGE_AP, EU=$DEV_IMAGE_EU, US=$DEV_IMAGE_US"
@@ -80,3 +63,21 @@ jobs:
         if [ "$PROD_SELECTED" == "Y" ]; then
           echo "Prod: AP=$PROD_IMAGE_AP, EU=$PROD_IMAGE_EU, US=$PROD_IMAGE_US"
         fi
+
+      env:
+        DEV_SELECTED: ${{ env.DEV_SELECTED }}
+        STAGING_SELECTED: ${{ env.STAGING_SELECTED }}
+        PREPROD_SELECTED: ${{ env.PREPROD_SELECTED }}
+        PROD_SELECTED: ${{ env.PROD_SELECTED }}
+        DEV_IMAGE_AP: ""
+        DEV_IMAGE_EU: ""
+        DEV_IMAGE_US: ""
+        STAGING_IMAGE_AP: ""
+        STAGING_IMAGE_EU: ""
+        STAGING_IMAGE_US: ""
+        PREPROD_IMAGE_AP: ""
+        PREPROD_IMAGE_EU: ""
+        PREPROD_IMAGE_US: ""
+        PROD_IMAGE_AP: ""
+        PROD_IMAGE_EU: ""
+        PROD_IMAGE_US: ""
