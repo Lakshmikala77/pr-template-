@@ -162,7 +162,7 @@ jobs:
       - name: Parse and Validate PR Body
         id: parse_pr
         run: |
-          # Extract the pull request body
+          # read the pull request body
           PR_BODY=$(jq -r '.pull_request.body' < "$GITHUB_EVENT_PATH")
           echo "PR_BODY=$PR_BODY"
 
