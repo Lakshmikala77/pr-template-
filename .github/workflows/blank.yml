@@ -144,9 +144,7 @@ on:
     types: [opened, edited, reopened]
     # Condition to trigger the pipeline based on the PR title
     branches:
-      - main  # Adjust this to the branch you want the PR to target
-    # Check if the title contains any of the specified regions: us, ap, eu, or rG
-    # The PR title should contain any of {us, ap, eu, rG} for the pipeline to be triggered
+      - main  
     if: |
       contains(github.event.pull_request.title, 'ap') &&
       contains(github.event.pull_request.title, 'eu') &&
